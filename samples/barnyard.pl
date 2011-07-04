@@ -34,30 +34,42 @@
 use SnortUnified qw(:ALL);
 use SnortUnified::Database qw(:ALL);
 use SnortUnified::MetaData(qw(:ALL));
-use Sys::Hostname;
+use Getopt::Long;
 
 print License . "\n";
 
-$file = shift;
+# $file = shift;
 $UF_Data = {};
 $record = {};
 
-$sids = get_snort_sids("/Users/jbrvenik/src/test/unified/sid-msg.map",
-                       "/Users/jbrvenik/src/test/unified/gen-msg.map");
-$class = get_snort_classifications("/Users/jbrvenik/src/test/unified/classification.config");
+$result = GetOptions ("sid-msg|S=s"         => \$sidmap,
+                      "gen-msg|G=s"         => \$gidmap, 
+                      "classification|C=s"  => \$classfile,
+                      "file|f=s"            => \$file,
+                      "username=s"          => \$user,
+                      "password=s"          => \$pass,
+                      "hostname=s"          => \$host,
+                      "interface=s"         => \$interface,
+                      "filter=s"            => \$filter,
+                      "database=s"          => \$db,
+                      "debug"               => \$debug);
+
+
+$sids = get_snort_sids($sidmap,$gidmap);
+$class = get_snort_classifications($classfile);
 
 # If you want to see them
-# print_snort_sids($sids);
+print_snort_sids($sids) if $debug;
 
 # If you want to see them
-# print_snort_classifications($class);
+print_snort_classifications($class) if $debug;
 
-setSnortConnParam('user', 'root');
-setSnortConnParam('password', '');
-setSnortConnParam('interface', 'eth1');
-setSnortConnParam('database', 'snorttest');
-setSnortConnParam('hostname', Sys::Hostname::hostname());
-setSnortConnParam('filter', '');
+setSnortConnParam('user', $user);
+setSnortConnParam('password', $pass);
+setSnortConnParam('interface', $interface);
+setSnortConnParam('database', $database);
+setSnortConnParam('hostname', $hostname);
+setSnortConnParam('filter', $filter);
 
 die unless getSnortDBHandle();
 
@@ -65,19 +77,15 @@ my $sensor_id = getSnortSensorID();
 my $uf_file = undef;
 my $old_uf_file = undef;
 
-# print("Sensor ID is " . $sensor_id . "\n");
-
-printSnortConnParams();
-printSnortSigIdMap();
-
+printSnortConnParams() if $debug;
+printSnortSigIdMap() if $debug;
 
 $uf_file = get_latest_file($file) || die "no files to get";
 die unless $UF_Data = openSnortUnified($uf_file);
 
-# while ( $record = readSnortUnifiedRecord() ) {
 while (1) {
   $old_uf_file = $uf_file;
-  $uf_file = get_latest_file() || die "no files to get";
+  $uf_file = get_latest_file($file) || die "no files to get";
   
   if ( $old_uf_file ne $uf_file ) {
     closeSnortUnified();
@@ -89,12 +97,24 @@ while (1) {
 
 sub read_records() {
   while ( $record = readSnortUnifiedRecord() ) {
-    if ( $UF_Data->{'TYPE'} eq 'LOG' ) {
-        print_log($record,$sids,$class);
-	insertSnortLog($record,$sids,$class);
+    if ( $UF_Data->{'TYPE'} eq 'UNIFIED2' ) {
+       if ( $record->{'TYPE'} eq $UNIFIED2_EVENT || $record->{'TYPE'} eq  $UNIFIED2_IDS_EVENT ) {
+         print_alert($record,$sids,$class) if $debug;
+	 insertSnortAlert($record,$sids,$class);
+       } 
+       if ( $record->{'TYPE'} eq $UNIFIED2_PACKET ) {
+         print_log($record,$sids,$class) if $debug;
+	 insertSnortLog($record,$sids,$class);
+       } 
     } else {
-        print_alert($record,$sids,$class);
+      #old school unified files should be long gone these days but JIC
+      if ( $UF_Data->{'TYPE'} eq 'LOG' ) {
+        print_log($record,$sids,$class) if $debug;
+	insertSnortLog($record,$sids,$class);
+      } else {
+        print_alert($record,$sids,$class) if $debug;
 	insertSnortAlert($record,$sids,$class);
+      }
     }
   }
   return 0;
