@@ -46,13 +46,13 @@ $result = GetOptions ("sid-msg|S=s"         => \$sidmap,
                       "gen-msg|G=s"         => \$gidmap, 
                       "classification|C=s"  => \$classfile,
                       "file|f=s"            => \$file,
-                      "username=s"          => \$user,
-                      "password=s"          => \$pass,
-                      "hostname=s"          => \$host,
-                      "interface=s"         => \$interface,
-                      "filter=s"            => \$filter,
-                      "database=s"          => \$db,
-                      "debug"               => \$debug);
+                      "username|u=s"        => \$user,
+                      "password|p=s"        => \$pass,
+                      "hostname|h=s"        => \$host,
+                      "interface|i=s"       => \$interface,
+                      "filter|F=s"          => \$filter,
+                      "database|d=s"        => \$db,
+                      "debug|D"             => \$debug);
 
 
 $sids = get_snort_sids($sidmap,$gidmap);
