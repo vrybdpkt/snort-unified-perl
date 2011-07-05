@@ -34,6 +34,7 @@
 use SnortUnified qw(:ALL);
 use SnortUnified::Database qw(:ALL);
 use SnortUnified::MetaData(qw(:ALL));
+use SnortUnified::TextOutput(qw(:ALL));
 use Getopt::ArgvFile(qw(argvFile));
 use Getopt::Long;
 
@@ -76,7 +77,7 @@ print_snort_classifications($class) if $debug;
 setSnortConnParam('user', $user);
 setSnortConnParam('password', $pass);
 setSnortConnParam('interface', $interface);
-setSnortConnParam('database', $database);
+setSnortConnParam('database', $db);
 setSnortConnParam('hostname', $hostname);
 setSnortConnParam('filter', $filter);
 
