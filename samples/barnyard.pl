@@ -52,8 +52,10 @@ $result = GetOptions ("sid-msg|S=s"         => \$sidmap,
                       "interface|i=s"       => \$interface,
                       "filter|F=s"          => \$filter,
                       "database|d=s"        => \$db,
+                      "help|?"              => usage(),
                       "debug|D"             => \$debug);
 
+checkParams();
 
 $sids = get_snort_sids($sidmap,$gidmap);
 $class = get_snort_classifications($classfile);
@@ -83,15 +85,16 @@ printSnortSigIdMap() if $debug;
 $uf_file = get_latest_file($file) || die "no files to get";
 die unless $UF_Data = openSnortUnified($uf_file);
 
+# This loops forever looking for files and processes them
 while (1) {
   $old_uf_file = $uf_file;
-  $uf_file = get_latest_file($file) || die "no files to get";
+  $uf_file = get_latest_file($file) || print "no files to get" if $debug;
+  sleep(30); # Don't spin 
   
   if ( $old_uf_file ne $uf_file ) {
     closeSnortUnified();
     $UF_Data = openSnortUnified($uf_file) || die "cannot open $uf_file";
   }
-
   read_records();
 }
 
@@ -141,3 +144,85 @@ sub get_latest_file($) {
   return $uf_file;
 }
 
+sub checkParams() {
+
+    $quit = 0;
+
+    if ( $debug ) {
+        print "DEBUG IS ON\n";
+    }
+
+    if ( !$sidmap ) {
+        print "The path to the sid-msg.map file is required. Use --sig-msg or -S\n";
+        $quit = 1;
+    }
+    if ( !$gidmap ) {
+        print "The path to the gen-msg.map file is required. Use --gen-msg or -G\n";
+        $quit = 1;
+    }
+    if ( !$classfile ) {
+        print "The path to the classifications file is required. Use --classification or -C\n";
+        $quit = 1;
+    }
+    if ( !$file ) {
+        print "The path and mask to the unified files are required. Use --file or -f\n";
+        $quit = 1;
+    }
+    if ( !$user ) {
+        print "A username for the database is required. Use --username or -u\n";
+        $quit = 1;
+    }
+    if ( !$pass ) {
+        print "A password for the database is required. Use --password or -p\n";
+        $quit = 1;
+    }
+    if ( !$host ) {
+        print "A hostname (or ip) for the database is required. Use --hostname or -h\n";
+        $quit = 1;
+    }
+    if ( !$db ) {
+        print "A database is required. Use --database or -d\n";
+        $quit = 1;
+    }
+
+    if ( $quit ) {
+        exit;
+    }
+}
+
+sub usage() {
+
+  print <<EOT;
+  Options:
+  $0 [options]
+
+  Required parameters:
+  --sid-msg or -S to specify the sid-msg.map file
+  --gen-msg or -G to specify the gen-msg.map file
+  --classification -C to specify the classification file
+  --file or -f to specify which unified files to use
+    NOTE: file can be a full name or a mask
+    if it is a file mask all files matching the mask will be processed in timestamp order
+    EG: /var/snort/unified.log.12345678 or /var/snort/unified.log.*
+
+  --username or -u to specify the db user name
+  --password or -p to speficy the password for --username
+  --hostname or -h to specify the database host
+  --database or -d to specify the name of the database to connect to
+  
+  Optional parameters:
+  --interface or -i to speficy the interface for use when inserting events
+  --filter or -F to specify a filter to use when inserting events
+  --help or -? print this usage
+  --debug or -D to turn on debugging
+
+  Examples:
+  $0 -S /etc/snort/sid-msg.mag -G /etc/snort/gid-msg.map -C /etc/snort/classification.conf -u snort -p passy -h localhost -d snortdb -f /var/log/snort/snort-unified*
+
+  $0 -S /etc/snort/sid-msg.mag -G /etc/snort/gid-msg.map -C /etc/snort/classification.conf -u snort -p passy -h localhost -d snortdb -f /var/log/snort/snort-unified* -i eth1 -f "not host 10.1.1.1" -D
+
+
+
+EOT
+  exit;
+}
