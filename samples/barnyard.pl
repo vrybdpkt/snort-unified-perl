@@ -1,12 +1,12 @@
 #!/usr/bin/perl -I..
 
-#########################################################################################
-# Copyright (c) 2007 Jason Brvenik.
+###############################################################################
+# Copyright (c) 2007-11 Jason Brvenik.
 # A Perl module to make it easy to work with snort unified files.
 # http://www.snort.org
 # 
 # Basic barnyard like functionality
-#########################################################################################
+###############################################################################
 # 
 #
 # The intellectual property rights in this program are owned by 
@@ -29,33 +29,40 @@
 # 
 # 
 #
-#########################################################################################
+###############################################################################
 
 use SnortUnified qw(:ALL);
 use SnortUnified::Database qw(:ALL);
 use SnortUnified::MetaData(qw(:ALL));
+use Getopt::ArgvFile(qw(argvFile));
 use Getopt::Long;
-
-print License . "\n";
 
 # $file = shift;
 $UF_Data = {};
 $record = {};
 
-$result = GetOptions ("sid-msg|S=s"         => \$sidmap,
-                      "gen-msg|G=s"         => \$gidmap, 
-                      "classification|C=s"  => \$classfile,
-                      "file|f=s"            => \$file,
-                      "username|u=s"        => \$user,
-                      "password|p=s"        => \$pass,
-                      "hostname|h=s"        => \$host,
-                      "interface|i=s"       => \$interface,
-                      "filter|F=s"          => \$filter,
-                      "database|d=s"        => \$db,
-                      "help|?"              => usage(),
-                      "debug|D"             => \$debug);
+argvFile();
 
-checkParams();
+$result = GetOptions ("sid-msg|sids|S=s"         => \$sidmap,
+                      "gen-msg|gids|G=s"         => \$gidmap, 
+                      "classification|C=s"       => \$classfile,
+                      "file|unified|f|U=s"       => \$file,
+                      "username|u=s"             => \$user,
+                      "password|p=s"             => \$pass,
+                      "hostname|h=s"             => \$host,
+                      "interface|i=s"            => \$interface,
+                      "filter|F=s"               => \$filter,
+                      "database|d=s"             => \$db,
+                      "help|?"                   => \&usage,
+                      "debug|D"                  => \$debug);
+
+print License . "\n" if $debug;
+
+if (checkParams() > 0) {
+    usage();
+    exit;
+};
+
 
 $sids = get_snort_sids($sidmap,$gidmap);
 $class = get_snort_classifications($classfile);
@@ -101,7 +108,8 @@ while (1) {
 sub read_records() {
   while ( $record = readSnortUnifiedRecord() ) {
     if ( $UF_Data->{'TYPE'} eq 'UNIFIED2' ) {
-       if ( $record->{'TYPE'} eq $UNIFIED2_EVENT || $record->{'TYPE'} eq  $UNIFIED2_IDS_EVENT ) {
+       if ( $record->{'TYPE'} eq $UNIFIED2_EVENT || 
+            $record->{'TYPE'} eq  $UNIFIED2_IDS_EVENT ) {
          print_alert($record,$sids,$class) if $debug;
 	 insertSnortAlert($record,$sids,$class);
        } 
@@ -126,7 +134,6 @@ sub read_records() {
 # clean up
 closeSnortUnified();
 closeSnortDBHandle();
-
 
 sub get_latest_file($) {
   my $filemask = shift;
@@ -153,47 +160,55 @@ sub checkParams() {
     }
 
     if ( !$sidmap ) {
-        print "The path to the sid-msg.map file is required. Use --sig-msg or -S\n";
+      print "The path to the sid-msg.map file is required. " . 
+             "Use --sig-msg or -S\n";
         $quit = 1;
     }
     if ( !$gidmap ) {
-        print "The path to the gen-msg.map file is required. Use --gen-msg or -G\n";
+        print "The path to the gen-msg.map file is required. " . 
+               "Use --gen-msg or -G\n";
         $quit = 1;
     }
     if ( !$classfile ) {
-        print "The path to the classifications file is required. Use --classification or -C\n";
+        print "The path to the classifications file is required. " .
+              "Use --classification or -C\n";
         $quit = 1;
     }
     if ( !$file ) {
-        print "The path and mask to the unified files are required. Use --file or -f\n";
+        print "The path and mask to the unified files are required. " . 
+              "Use --file or -f\n";
         $quit = 1;
     }
     if ( !$user ) {
-        print "A username for the database is required. Use --username or -u\n";
+        print "A username for the database is required. " .
+               "Use --username or -u\n";
         $quit = 1;
     }
     if ( !$pass ) {
-        print "A password for the database is required. Use --password or -p\n";
+        print "A password for the database is required. " .
+               "Use --password or -p\n";
         $quit = 1;
     }
     if ( !$host ) {
-        print "A hostname (or ip) for the database is required. Use --hostname or -h\n";
+        print "A hostname (or ip) for the database is required. " .
+               "Use --hostname or -h\n";
         $quit = 1;
     }
     if ( !$db ) {
-        print "A database is required. Use --database or -d\n";
+        print "A database is required. " . 
+               "Use --database or -d\n";
         $quit = 1;
     }
 
-    if ( $quit ) {
-        exit;
-    }
+    return $quit;
 }
 
 sub usage() {
 
+###############################################################################
   print <<EOT;
-  Options:
+  
+  $0 is a "barnyard like" utility for processing snort unified files
   $0 [options]
 
   Required parameters:
@@ -201,10 +216,6 @@ sub usage() {
   --gen-msg or -G to specify the gen-msg.map file
   --classification -C to specify the classification file
   --file or -f to specify which unified files to use
-    NOTE: file can be a full name or a mask
-    if it is a file mask all files matching the mask will be processed in timestamp order
-    EG: /var/snort/unified.log.12345678 or /var/snort/unified.log.*
-
   --username or -u to specify the db user name
   --password or -p to speficy the password for --username
   --hostname or -h to specify the database host
@@ -217,11 +228,35 @@ sub usage() {
   --debug or -D to turn on debugging
 
   Examples:
-  $0 -S /etc/snort/sid-msg.mag -G /etc/snort/gid-msg.map -C /etc/snort/classification.conf -u snort -p passy -h localhost -d snortdb -f /var/log/snort/snort-unified*
+  $0 -S /etc/snort/sid-msg.mag -G /etc/snort/gid-msg.map \\
+     -C /etc/snort/classification.conf -u snort -p passy \\
+     -h localhost -d snortdb -f /var/log/snort/snort-unified*
 
-  $0 -S /etc/snort/sid-msg.mag -G /etc/snort/gid-msg.map -C /etc/snort/classification.conf -u snort -p passy -h localhost -d snortdb -f /var/log/snort/snort-unified* -i eth1 -f "not host 10.1.1.1" -D
+  $0 -S /etc/snort/sid-msg.mag -G /etc/snort/gid-msg.map \\
+     -C /etc/snort/classification.conf -u snort -p passy \\
+     -h localhost -d snortdb -f /var/log/snort/snort-unified* \\
+     -i eth1 -f "not host 10.1.1.1" -D
 
+  $0 @/etc/snort/barnyard.conf
 
+  Notes:
+  You can also place the command line options into a configuration file and 
+  point to it using ithis syntax "$0 @/path/to/barnyard.conf"
+
+  NOTE: file (--file or -f) can be a full name or a mask
+  if it is a file mask the latest file matching the mask will be processed
+  EG: /var/snort/unified.log.12345678 to process a single file
+      /var/snort/unified.log.* to process the latest file matching the mask
+
+  $0 will follow the last file matching the mask one until a new one appears
+  in this way you can have a process running continually inserting events as 
+  they appear.
+
+  - Moving old files to an archive etc is left as an exercise to the user.
+  - Not reprocessing files is left as an exercise for the user but note that 
+    processing a file again will just result in insert failures and is not fatal
+  - If you have a directory of files you want to process to "catch up" then you
+    will need to process them one at a time until things are caught up
 
 EOT
   exit;
