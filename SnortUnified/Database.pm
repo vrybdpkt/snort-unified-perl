@@ -248,9 +248,6 @@ sub getSnortSensorID() {
     # get the next event ID for this sensor
     ($DB_INFO->{'event_id'}) = $DBH->selectrow_array("SELECT max(cid) FROM " . 
                                                      "event WHERE sid=" . $sid);
-    if ( !$DB_INFO->{'event_id'} ) {
-        $DB_INFO->{'event_id'} = 1;
-    }
     $DB_INFO->{'event_id'}++;
 
     # build the sig_id map and cache it for use
