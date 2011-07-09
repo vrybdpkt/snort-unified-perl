@@ -38,10 +38,10 @@ my $class_self;
 
 BEGIN {
    $class_self = __PACKAGE__;
-   $VERSION = "1.6devel20071001";
+   $VERSION = "1.7devel202011070901";
 }
 my $LICENSE = "GNU GPL see http://www.gnu.org/licenses/gpl.txt for more information.";
-sub Version() { "$class_self v$VERSION - Copyright (c) 2007 Jason Brvenik" };
+sub Version() { "$class_self v$VERSION - Copyright (c) 2007-2011 Jason Brvenik" };
 sub License() { Version . "\nLicensed under the $LICENSE" };
 
 @ISA = qw(Exporter);

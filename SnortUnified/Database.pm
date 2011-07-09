@@ -69,7 +69,7 @@ my $class_self;
 
 BEGIN {
    $class_self = __PACKAGE__;
-   $VERSION = "1.3devel";
+   $VERSION = "1.7devel2011070901";
 }
 my $DBLICENSE = "GNU GPL see http://www.gnu.org/licenses/gpl.txt for more information.";
 sub DBVersion() { "$class_self v$VERSION - Copyright (c) 2006 Jason Brvenik" };

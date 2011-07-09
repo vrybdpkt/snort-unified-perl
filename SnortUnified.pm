@@ -68,7 +68,7 @@ my $class_self;
 
 BEGIN {
    $class_self = __PACKAGE__;
-   $VERSION = "1.620110126";
+   $VERSION = "1.7devel2011070901";
 }
 my $LICENSE = "GNU GPL see http://www.gnu.org/licenses/gpl.txt for more information.";
 sub Version() { "$class_self v$VERSION - Copyright (c) 2007 Jason Brvenik" };
