@@ -1,4 +1,4 @@
-package Decoders;
+package SnortUnified::Decoders;
 
 #########################################################################################
 #  $VERSION = "SnortUnified Parser - Copyright (c) 2007 Jason Brvenik";
@@ -61,18 +61,18 @@ sub License() { Version . "\nLicensed under the $LICENSE" };
                                    decodeTCPOptions
                                   )
                                ],
-               UDP_decoders => [qw(
-                                  )
-                               ],
-               ICMP_decoders => [qw(
-                                   )
-                                ],
-               VLAN_decoders => [qw(
-                                   )
-                                ],
-               PPP_decoders => [qw(
-                                  )
-                                ],
+#                UDP_decoders => [qw(
+#                                   )
+#                                ],
+#                ICMP_decoders => [qw(
+#                                    )
+#                                 ],
+#                VLAN_decoders => [qw(
+#                                    )
+#                                 ],
+#                PPP_decoders => [qw(
+#                                   )
+#                                 ],
 );
 
 sub decodeIPOptions($) {
@@ -234,4 +234,3 @@ sub debug($) {
 
 
 1;
-                                                                                                                     1313,1        Bot

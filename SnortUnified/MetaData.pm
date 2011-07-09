@@ -56,6 +56,23 @@ sub License() { Version . "\nLicensed under the $LICENSE" };
                  get_snort_classifications
                  print_snort_classifications
                  get_priority
+                 $ETHERNET_TYPE_IP
+                 $ETHERNET_TYPE_ARP
+                 $ETHERNET_TYPE_REVARP
+                 $ETHERNET_TYPE_IPV6
+                 $ETHERNET_TYPE_IPX
+                 $ETHERNET_TYPE_PPPoE_DISC
+                 $ETHERNET_TYPE_PPPoE_SESS
+                 $ETHERNET_TYPE_8021Q
+                 $ETHERNET_TYPE_NAMES
+                 $IP_PROTO_NAMES
+                 $IP_OPT_MAP
+                 $TCP_OPT_MAP
+                 $ICMP_TYPES
+                 $PKT_FRAG_FLAG 
+                 $PKT_RB_FLAG 
+                 $PKT_DF_FLAG 
+                 $PKT_MF_FLAG
 );
 
 %EXPORT_TAGS = (

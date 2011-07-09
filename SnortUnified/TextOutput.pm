@@ -41,6 +41,7 @@ use NetPacket::TCP qw(:ALL);
 use NetPacket::UDP qw(:ALL);
 use NetPacket::ICMP qw(:ALL);
 use SnortUnified::MetaData qw(:ALL);
+use SnortUnified::Decoders qw(:ALL);
 
 my $class_self;
 
