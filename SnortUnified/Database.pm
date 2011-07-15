@@ -212,6 +212,7 @@ sub getSnortSensorID() {
                         "detail=? AND " .
                         "encoding='0'");
 
+						
     $qh->execute($DB_INFO->{'hostname'}, 
                  $DB_INFO->{'interface'}, 
                  $DB_INFO->{'filter'}, 
@@ -222,7 +223,7 @@ sub getSnortSensorID() {
     if ( !defined $sid ) {
         $qh = $DBH->prepare("INSERT INTO sensor(hostname,interface,filter," .
                             "detail,encoding,last_cid) VALUES (?,?,?,?,'0','0')");
-
+					
         $qh->execute($DB_INFO->{'hostname'}, 
                      $DB_INFO->{'interface'}, 
                      $DB_INFO->{'filter'}, 
@@ -242,7 +243,7 @@ sub getSnortSensorID() {
 
         ($sid) = $qh->fetchrow_array();
     }
-
+	
     $DB_INFO->{'sensor_id'} = $sid;
 
     # get the next event ID for this sensor
@@ -293,7 +294,7 @@ sub getSigID($$$) {
     # Most commonly this is for local rules
     # Using UNKNOWN for the sig message in this case
     $msg = defined $msg?$msg:"UNKNOWN";
-
+    
     if ( defined $SIG_ID_MAP->{$gensid}->{'id'} ) {
         return $SIG_ID_MAP->{$gensid}->{'id'};
     }
@@ -312,8 +313,9 @@ sub getSigID($$$) {
         }
 
         $SIG_MAP_H->execute($msg,
-                   $record->{'class'},
-                   $record->{'pri'},
+                   # $record->{'class'},
+                   $classid,
+				   $record->{'pri'},
                    $record->{'sig_rev'},
                    $record->{'sig_id'},
                    $record->{'sig_gen'});

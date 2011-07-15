@@ -50,7 +50,7 @@ $result = GetOptions ("sid-msg|sids|S=s"         => \$sidmap,
                       "file|unified|f|U=s"       => \$file,
                       "username|u=s"             => \$user,
                       "password|p=s"             => \$pass,
-                      "hostname|h=s"             => \$host,
+                      "hostname|h=s"             => \$hostname,
                       "interface|i=s"            => \$interface,
                       "filter|F=s"               => \$filter,
                       "database|d=s"             => \$db,
@@ -90,6 +90,7 @@ my $old_uf_file = undef;
 printSnortConnParams() if $debug;
 printSnortSigIdMap() if $debug;
 
+
 $uf_file = get_latest_file($file) || die "no files to get";
 die unless $UF_Data = openSnortUnified($uf_file);
 
@@ -97,7 +98,6 @@ die unless $UF_Data = openSnortUnified($uf_file);
 while (1) {
   $old_uf_file = $uf_file;
   $uf_file = get_latest_file($file) || print "no files to get" if $debug;
-  sleep(30); # Don't spin 
   
   if ( $old_uf_file ne $uf_file ) {
     closeSnortUnified();
@@ -111,21 +111,21 @@ sub read_records() {
     if ( $UF_Data->{'TYPE'} eq 'UNIFIED2' ) {
        if ( $record->{'TYPE'} eq $UNIFIED2_EVENT || 
             $record->{'TYPE'} eq  $UNIFIED2_IDS_EVENT ) {
-         print_alert($record,$sids,$class) if $debug;
-	 insertSnortAlert($record,$sids,$class);
+        print_alert($record,$sids,$class) if $debug;
+		insertSnortAlert($record,$sids,$class);
        } 
        if ( $record->{'TYPE'} eq $UNIFIED2_PACKET ) {
-         print_log($record,$sids,$class) if $debug;
-	 insertSnortLog($record,$sids,$class);
+        print_log($record,$sids,$class) if $debug;
+		insertSnortLog($record,$sids,$class);
        } 
     } else {
       #old school unified files should be long gone these days but JIC
       if ( $UF_Data->{'TYPE'} eq 'LOG' ) {
         print_log($record,$sids,$class) if $debug;
-	insertSnortLog($record,$sids,$class);
+		insertSnortLog($record,$sids,$class);
       } else {
         print_alert($record,$sids,$class) if $debug;
-	insertSnortAlert($record,$sids,$class);
+		insertSnortAlert($record,$sids,$class);
       }
     }
   }
@@ -141,6 +141,7 @@ sub get_latest_file($) {
   my @ls = <$filemask*>;
   my $len = @ls;
   my $uf_file = "";
+
 
   if ($len) {
     # Get the most recent file
@@ -190,7 +191,7 @@ sub checkParams() {
                "Use --password or -p\n";
         $quit = 1;
     }
-    if ( !$host ) {
+    if ( !$hostname ) {
         print "A hostname (or ip) for the database is required. " .
                "Use --hostname or -h\n";
         $quit = 1;
@@ -200,6 +201,12 @@ sub checkParams() {
                "Use --database or -d\n";
         $quit = 1;
     }
+	if ( !$interface ) {
+	    $interface = "NULL";
+	}
+	if ( !$filter ) {
+	    $filter = "NULL";
+	}
 
     return $quit;
 }
