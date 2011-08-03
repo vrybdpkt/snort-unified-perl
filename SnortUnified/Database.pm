@@ -149,7 +149,7 @@ sub setSnortConnParam($$) {
             ";host=" . $DB_INFO->{'host'} .
             ";port=" . $DB_INFO->{'port'} .
             ";";
-    } else if ($DB_INFO->{'type'} eq 'ODBC' ) {
+    } elsif ($DB_INFO->{'type'} eq 'ODBC' ) {
 		$DB_INFO->{'connstr'} = "DBI:ODBC:DRIVER={SQL Server}" .
 		    ";Server=" . $DB_INFO->{'host'} . 
 			";Database=" . $DB_INFO->{'database'} .
