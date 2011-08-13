@@ -189,7 +189,7 @@ sub getSnortDBHandle() {
     $DBH = DBI->connect($DB_INFO->{'connstr'}, $DB_INFO->{'user'}, $DB_INFO->{'password'}); 
     
     # XXX - Need to fix for 5.0
-    if ( $DB_INFO->{'type'} eq 'mysql' ) ) {
+    if ( $DB_INFO->{'type'} eq 'mysql' ) {
         ($schema) = $DBH->selectrow_array("SELECT max(vseq) from `schema`");
     } else {
         ($schema) = $DBH->selectrow_array("SELECT max(vseq) from schema");
