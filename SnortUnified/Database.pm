@@ -149,7 +149,7 @@ sub setSnortConnParam($$) {
             ";host=" . $DB_INFO->{'host'} .
             ";port=" . $DB_INFO->{'port'} .
             ";";
-    } elsif ($DB_INFO->{'type'} eq 'ODBC' ) {
+    } elsif ($DB_INFO->{'type'} eq 'ODBC::mssql' ) {
 		$DB_INFO->{'connstr'} = "DBI:ODBC:DRIVER={SQL Server}" .
 		    ";Server=" . $DB_INFO->{'host'} . 
 			";Database=" . $DB_INFO->{'database'} .
@@ -188,9 +188,13 @@ sub getSnortDBHandle() {
 
     $DBH = DBI->connect($DB_INFO->{'connstr'}, $DB_INFO->{'user'}, $DB_INFO->{'password'}); 
     
-    # XXX - Need to fix for 5.0
+    # schema is a reserved word in mysql and mssql
+    # mysql escaped with backticks, mssql with square brackets
+    # Don't know about other databases, let me know.
     if ( $DB_INFO->{'type'} eq 'mysql' ) {
         ($schema) = $DBH->selectrow_array("SELECT max(vseq) from `schema`");
+    } elsif $DB_INFO->{'type'} eq 'ODBC::mssql' ) {
+        ($schema) = $DBH->selectrow_array("SELECT max(vseq) from [schema]");
     } else {
         ($schema) = $DBH->selectrow_array("SELECT max(vseq) from schema");
     }
