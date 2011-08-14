@@ -75,10 +75,10 @@ print_snort_sids($sids) if $debug;
 print_snort_classifications($class) if $debug;
 
 # To use mssql you need to set up ODBC
-# and do use it by changing the type to ODBC
+# and do use it by changing the type to ODBC::mssql
 
 # Set the connection type to ODBC
-# setSnortConnParam('type', "ODBC");
+# setSnortConnParam('type', "ODBC::mssql");
 
 # Set connection type tp mysql (default)
 # setSnortConnParam('type', "mysql");
