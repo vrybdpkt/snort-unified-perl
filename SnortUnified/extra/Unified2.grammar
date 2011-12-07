@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ufwb version="1.1.5.1">
+    <grammar name="Unified2 Files" start="id:5" author="Jason Brvenik" fileextension="unified2">
+        <description>Grammar for Snort Unified2 files</description>
+        <structure name="Unified2File" id="5" alignment="0" repeatmax="99999999999" encoding="ISO_8859-1:1987" endian="big" signed="no" order="variable">
+            <structref name="IDS Event (7)" id="7" fillcolor="FB9500" repeatmin="0" repeatmax="99999999999" structure="id:6"/>
+            <structref name="Packet" id="9" fillcolor="31FC00" repeatmin="0" repeatmax="99999999999" structure="id:8"/>
+            <structref name="IDS Event VLAN (104)" id="11" fillcolor="FB9500" repeatmin="0" repeatmax="99999999999" structure="id:10"/>
+            <structref name="Extra Data" id="13" repeatmin="0" repeatmax="999999999" structure="id:12"/>
+            <structref name="Unknown" id="15" fillcolor="FA2606" repeatmin="0" repeatmax="99999999999" structure="id:14"/>
+        </structure>
+        <structure name="Packet" id="8" repeatmin="0" repeatmax="99999999999" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <number name="Type" mustmatch="yes" id="17" fillcolor="FB9500" type="integer" length="4">
+                <fixedvalue name="Packet Record" value="2"/>
+            </number>
+            <number name="Size" id="18" fillcolor="FDFF00" type="integer" length="4"/>
+            <binary name="Data" id="19" fillcolor="31FC00" length="Size"/>
+        </structure>
+        <structure name="IDS Event (7)" id="6" alignment="0" repeatmin="0" repeatmax="99999999999" encoding="ISO_8859-1:1987" endian="big" signed="no" strokecolor="FB9500">
+            <number name="Type" mustmatch="yes" id="21" fillcolor="FB9500" type="integer" length="4">
+                <fixedvalue name="Type 7 IDS Event" value="7"/>
+            </number>
+            <number name="Size" id="22" fillcolor="FDFF00" type="integer" length="4"/>
+            <number name="Sensor ID" id="23" fillcolor="1A00FF" type="integer" length="4"/>
+            <number name="Event ID" id="24" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Timestamp Seconds" id="25" fillcolor="FB24FF" type="integer" length="4"/>
+            <number name="Timestamp Microseconds" id="26" fillcolor="FB24FF" type="integer" length="4"/>
+            <number name="Signature ID" id="27" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Generator" id="28" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Revision" id="29" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Classification" id="30" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Priority" id="31" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Source IP" id="32" fillcolor="8F0F92" type="integer" length="4"/>
+            <number name="Destination IP" id="33" fillcolor="8F0F92" type="integer" length="4"/>
+            <number name="Source Port" id="34" fillcolor="8F0F92" type="integer" length="2"/>
+            <number name="Destination Port" id="35" fillcolor="8F0F92" type="integer" length="2"/>
+            <number name="Protocol" id="36" fillcolor="8F0F92" type="integer" length="1"/>
+            <number name="Action" id="37" fillcolor="FA2606" type="integer" length="1"/>
+            <binary name="Pad" id="38" fillcolor="000000" length="2"/>
+        </structure>
+        <structure name="IDS Event VLAN (104)" id="10" repeatmin="0" repeatmax="99999999999" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <number name="Type" mustmatch="yes" id="40" fillcolor="FB9500" type="integer" length="4">
+                <fixedvalue name="Type 104 IDS Event" value="104"/>
+            </number>
+            <number name="Size" id="41" fillcolor="FDFF00" type="integer" length="4"/>
+            <number name="Sensor ID" id="42" fillcolor="1A00FF" type="integer" length="4"/>
+            <number name="Event ID" id="43" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Timestamp Seconds" id="44" fillcolor="FB24FF" type="integer" length="4"/>
+            <number name="Timestamp" id="45" fillcolor="FB24FF" type="integer" length="4"/>
+            <number name="Signature ID" id="46" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Generator" id="47" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Revision" id="48" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Classification" id="49" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Priority" id="50" fillcolor="39FCFE" type="integer" length="4"/>
+            <number name="Source IP" id="51" fillcolor="8F0F92" type="integer" length="4"/>
+            <number name="Destination IP" id="52" fillcolor="8F0F92" type="integer" length="4"/>
+            <number name="Source Port" id="53" fillcolor="8F0F92" type="integer" length="2"/>
+            <number name="Destination Port" id="54" fillcolor="8F0F92" type="integer" length="2"/>
+            <number name="Protocol" id="55" fillcolor="8F0F92" type="integer" length="1"/>
+            <number name="Action" id="56" fillcolor="FA2606" type="integer" length="1"/>
+            <number name="Impact" id="57" fillcolor="FA2606" type="integer" length="1"/>
+            <number name="Blocked" id="58" fillcolor="FA2606" type="integer" length="1"/>
+            <number name="MPLS Label" id="59" fillcolor="31FC00" type="integer" length="4"/>
+            <number name="VLAN ID" id="60" fillcolor="31FC00" type="integer" length="2"/>
+            <number name="Policy ID" id="61" fillcolor="31FC00" type="integer" length="2"/>
+        </structure>
+        <structure name="Unknown Record Header" id="14" repeatmin="0" repeatmax="99999999999" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <number name="Type" id="63" fillcolor="FB9500" type="integer" length="4"/>
+            <number name="Size" id="64" fillcolor="FDFF00" type="integer" length="4"/>
+            <binary name="Data" id="65" fillcolor="FA2606" length="Size"/>
+        </structure>
+        <structure name="Extra Data" id="12" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <number name="Type" mustmatch="yes" id="67" fillcolor="FB9500" type="integer" length="4">
+                <fixedvalue name="Extra Data" value="110"/>
+            </number>
+            <number name="Size" id="68" fillcolor="FDFF00" type="integer" length="4"/>
+            <binary name="Data" id="69" fillcolor="31FC00" length="Size"/>
+        </structure>
+    </grammar>
+</ufwb>
