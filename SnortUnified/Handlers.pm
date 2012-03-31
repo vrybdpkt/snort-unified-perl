@@ -1,6 +1,6 @@
 package SnortUnified::Handlers;
 #########################################################################################
-#  $VERSION = "SnortUnified Parser - Copyright (c) 2007 Jason Brvenik";
+#  $VERSION = "SnortUnified Parser - Copyright (c) 2007-2012 Jason Brvenik";
 # 
 # A Perl module to make it easy to work with snort unified files.
 # http://www.snort.org
@@ -37,11 +37,11 @@ my $class_self;
 
 BEGIN {
    $class_self = __PACKAGE__;
-   $VERSION = "1.6devel20071118";
+   $VERSION = "1.8-2012033101";
 }
 
 my $LICENSE = "GNU GPL see http://www.gnu.org/licenses/gpl.txt for more information.";
-sub Version() { "$class_self v$VERSION - Copyright (c) 2007 Jason Brvenik" };
+sub Version() { "$class_self v$VERSION - Copyright (c) 2007-2012 Jason Brvenik" };
 sub License() { Version . "\nLicensed under the $LICENSE" };
 
 @ISA = qw(Exporter);
@@ -156,7 +156,8 @@ sub exec_qualifier($$$$) {
         }
     }
 
-    if ( defined $QUALIFIERS->{0}->{$gen}->{$sid} ) {
+    if ( defined($gen) && defined($sid) &&
+         defined $QUALIFIERS->{0}->{$gen}->{$sid} ) {
         # A decision was made to operate on this GEN:SID, reset retval.
         $retval = 1;
         debug("Executing qualifier for 0 :" . $gen . ":" . $sid);
@@ -172,7 +173,8 @@ sub exec_qualifier($$$$) {
         }
     }
 
-    if ( defined $QUALIFIERS->{$type}->{$gen}->{$sid} ) {
+    if ( defined($gen) && defined($sid) &&
+         defined $QUALIFIERS->{$type}->{$gen}->{$sid} ) {
     
         # A decision was made to operate on this GEN:SID, reset retval.
         $retval = 1;
@@ -191,7 +193,8 @@ sub exec_qualifier($$$$) {
         }
     }
     
-    if ( defined $QUALIFIERS->{'PCRE'}->{$gen}->{$sid} && defined $rec->{'pkt'} ) {
+    if ( defined($gen) && defined($sid) &&
+         defined $QUALIFIERS->{'PCRE'}->{$gen}->{$sid} && defined $rec->{'pkt'} ) {
 
         debug("Handling PCRE for" . $gen . ":" . $sid);
 

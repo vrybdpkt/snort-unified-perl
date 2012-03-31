@@ -1,7 +1,7 @@
 package SnortUnified::TextOutput;
 
 #########################################################################################
-#  $VERSION = "SnortUnified Parser - Copyright (c) 2007 Jason Brvenik";
+#  $VERSION = "SnortUnified Parser - Copyright (c) 2007-2012 Jason Brvenik";
 # 
 # A Perl module to make it easy to work with snort unified files.
 # http://www.snort.org
@@ -47,21 +47,24 @@ my $class_self;
 
 BEGIN {
    $class_self = __PACKAGE__;
-   $VERSION = "1.7devel2011070901";
+   $VERSION = "1.8-2012033101";
 }
 my $LICENSE = "GNU GPL see http://www.gnu.org/licenses/gpl.txt for more information.";
-sub Version() { "$class_self v$VERSION - Copyright (c) 2007 Jason Brvenik" };
+sub Version() { "$class_self v$VERSION - Copyright (c) 2007-2012 Jason Brvenik" };
 sub License() { Version . "\nLicensed under the $LICENSE" };
 
 @ISA = qw(Exporter);
 @EXPORT = qw();
 @EXPORT_OK = qw(
                 format_packet_data
+                format_packet_data_hex
+                format_packet_data_ascii
                 print_packet_data
                 print_alert
                 format_alert
                 print_log
                 format_log
+                format_u2_packet_rec
 );
 
 %EXPORT_TAGS = (
@@ -104,6 +107,38 @@ sub format_packet_data($) {
   return $ret;
 }
 
+sub format_packet_data_hex($) {
+    my $data = $_[0];
+    my $buff = '';
+    my $hex = '';
+    my $len = length($data);
+    my $count = 0;
+    my $ret = "";
+
+    for (my $i = 0;$i < length($data);$i += 16) {
+       $buff = substr($data,$i,16);
+       $hex = join(' ',unpack('H2 H2 H2 H2 H2 H2 H2 H2 H2 H2 H2 H2 H2 H2 H2 H2',$buff));
+       $ret = $ret . sprintf("%.4X: %s\n", $count, $hex);
+       $count += length($buff);
+    }
+  return $ret;
+}
+
+sub format_packet_data_ascii($) {
+    my $data = $_[0];
+    my $buff = '';
+    my $ascii = '';
+    my $len = length($data);
+    my $ret = "";
+
+    for (my $i = 0;$i < length($data);$i += 16) {
+       $buff = substr($data,$i,16);
+       $ascii = unpack('a16', $buff);
+       $ascii =~ tr/A-Za-z0-9;:\"\'.,<>[]\\|?\/\`~!\@#$%^&*()_\-+={}/./c;
+       $ret = $ret . $ascii;
+    }
+  return $ret;
+}
 
 sub print_alert($$$) {
     print format_alert($_[0], $_[1], $_[2]);
@@ -120,14 +155,14 @@ sub format_alert($$$) {
     $ret = sprintf("%s {%s} %s:%d -> %s:%d\n" .
             "[**] [%d:%d:%d] %s [**]\n" .
             "[Classification: %s] [Priority: %d]\n", $time,
-            $IP_PROTO_NAMES->{$rec->{'protocol'}},
+            exists($IP_PROTO_NAMES->{$rec->{'protocol'}})?$IP_PROTO_NAMES->{$rec->{'protocol'}}:"PROTO:$rec->{'protocol'}",
             inet_ntoa(pack('N', $rec->{'sip'})),
             $rec->{'sp'}, inet_ntoa(pack('N', $rec->{'dip'})),
             $rec->{'dp'}, $rec->{'sig_gen'}, $rec->{'sig_id'},
             $rec->{'sig_rev'},
             get_msg($sids,$rec->{'sig_gen'},$rec->{'sig_id'},$rec->{'sig_rev'}),
             get_class($class,$rec->{'class'}),
-            get_priority($class,$rec->{'class'},$rec->{'priority'}));
+            get_priority($class,$rec->{'class'},$rec->{'pri'}));
 
     foreach my $ref ($sids->{$rec->{'sig_gen'}}->{$rec->{'sig_id'}}->{'reference'}) {
         if ( defined $ref ) {
@@ -161,7 +196,7 @@ sub format_log($$$) {
             $rec->{'sig_gen'}, $rec->{'sig_id'}, $rec->{'sig_rev'},
             get_msg($sids,$rec->{'sig_gen'},$rec->{'sig_id'},$rec->{'sig_rev'}),
             get_class($class,$rec->{'class'}),
-            get_priority($class,$rec->{'class'},$rec->{'priority'}));
+            get_priority($class,$rec->{'class'},$rec->{'pri'}));
 
     foreach my $ref ($sids->{$rec->{'sig_gen'}}->{$rec->{'sig_id'}}->{'reference'}) {
         if ( defined $ref ) {
@@ -202,7 +237,8 @@ sub format_log($$$) {
             }
         }
         $ret = $ret . sprintf("%s TTL:%d TOS:0x%X ID:%d IpLen:%d DgmLen:%d",
-                $IP_PROTO_NAMES->{$ip_obj->{proto}},
+                # $IP_PROTO_NAMES->{$ip_obj->{proto}},
+                exists($IP_PROTO_NAMES->{$ip_obj->{proto}})?$IP_PROTO_NAMES->{$ip_obj->{proto}}:"PROTO:$ip_obj->{proto}",
                 $ip_obj->{ttl},
                 $ip_obj->{tos},
                 $ip_obj->{id},
@@ -276,6 +312,127 @@ sub format_log($$$) {
         $ret = $ret . sprintf("Linktype %i not decoded.  Raw packet dumped\n",
                 $eth_obj->{type});
         $ret = $ret . format_packet_data($eth_obj->{data});
+    }
+
+    return $ret;
+}
+
+
+sub format_u2_packet_rec($) {
+    my $rec = $_[0];
+    my $eth_obj;
+    my $ip_obj;
+    my $tcp_obj;
+    my $udp_obj;
+    my $icmp_obj;
+    my $time = gmtime($rec->{'pkt_sec'});
+    my $ret = "";
+
+    $eth_obj = NetPacket::Ethernet->decode($rec->{'pkt'});
+    if ( $eth_obj->{type} eq $ETHERNET_TYPE_IP ) {
+        $ip_obj = NetPacket::IP->decode($eth_obj->{data});
+        if ( $ip_obj->{proto} ne IP_PROTO_TCP && $ip_obj->{proto} ne IP_PROTO_UDP ) {
+            $ret = $ret . sprintf("%s\n%s -> %s\n", $time, $ip_obj->{src_ip}, $ip_obj->{dest_ip});
+        } else {
+            if ( $ip_obj->{proto} eq IP_PROTO_TCP ) {
+                $tcp_obj = NetPacket::TCP->decode($ip_obj->{data});
+                $ret = $ret . sprintf("%s\n%s:%d -> %s:%d\n",
+                    $time,
+                    $ip_obj->{src_ip},
+                    $tcp_obj->{src_port},
+                    $ip_obj->{dest_ip},
+                    $tcp_obj->{dest_port});
+            } elsif ( $ip_obj->{proto} eq IP_PROTO_UDP ) {
+                $udp_obj = NetPacket::UDP->decode($ip_obj->{data});
+                $ret = $ret . sprintf("%s\n%s:%d -> %s:%d\n",
+                $time,
+                $ip_obj->{src_ip},
+                $udp_obj->{src_port},
+                $ip_obj->{dest_ip},
+                $udp_obj->{dest_port});
+            } else {
+                # Should never get here
+                print("DEBUGME: Why am I here - IP Header Print\n");
+            }
+        }
+        $ret = $ret . sprintf("%s TTL:%d TOS:0x%X ID:%d IpLen:%d DgmLen:%d",
+                exists($IP_PROTO_NAMES->{$ip_obj->{proto}})?$IP_PROTO_NAMES->{$ip_obj->{proto}}:"PROTO:$ip_obj->{proto}",
+                $ip_obj->{ttl},
+                $ip_obj->{tos},
+                $ip_obj->{id},
+                $ip_obj->{len} - $ip_obj->{hlen},
+                $ip_obj->{len});
+
+        if ( $ip_obj->{flags} & $PKT_RB_FLAG ) {
+            $ret = $ret . sprintf(" RB");
+        }
+
+        if ( $ip_obj->{flags} & $PKT_DF_FLAG ) {
+            $ret = $ret . sprintf(" DF");
+        }
+        if ( $ip_obj->{flags} & $PKT_MF_FLAG ) {
+            $ret = $ret . sprintf(" MF");
+        }
+
+        $ret = $ret . sprintf("\n");
+
+        if ( length($ip_obj->{options}) gt 0 ) {
+            my $IPOptions = decodeIPOptions($ip_obj->{options});
+            foreach my $ipoptkey ( keys %{$IPOptions} ) {
+                $ret = $ret . sprintf("IP Option %d : %s\n", $ipoptkey, $IPOptions->{'name'});
+                $ret = $ret . format_packet_data_hex($IPOptions->{'data'});
+            }
+        }
+
+        if ( $ip_obj->{flags} & 0x00000001 ) {
+            $ret = $ret . sprintf("Frag Offset: 0x%X   Frag Size: 0x%X\n",
+                   $ip_obj->{foffset} & 0xFFFF, $ip_obj->{len});
+        }
+
+        if ( $ip_obj->{proto} eq IP_PROTO_TCP ) {
+            $ret = $ret . sprintf("%s%s%s%s%s%s%s%s",
+            $tcp_obj->{flags} & CWR?"1":"*",
+            $tcp_obj->{flags} & ECE?"2":"*",
+            $tcp_obj->{flags} & URG?"U":"*",
+            $tcp_obj->{flags} & ACK?"A":"*",
+            $tcp_obj->{flags} & PSH?"P":"*",
+            $tcp_obj->{flags} & RST?"R":"*",
+            $tcp_obj->{flags} & SYN?"S":"*",
+            $tcp_obj->{flags} & FIN?"F":"*");
+            $ret = $ret . sprintf(" Seq: 0x%lX  Ack: 0x%lX  Win: 0x%X  TcpLen: %d",
+                   $tcp_obj->{seqnum},
+                   $tcp_obj->{acknum},
+                   $tcp_obj->{winsize},
+                   length($tcp_obj->{data}));
+            if ( defined $tcp_obj->{urg} && $tcp_obj->{urg} gt 0 ) {
+                $ret = $ret . sprintf("  UrgPtr: 0x%X", $tcp_obj->{urg});
+            }
+            $ret = $ret . sprintf("\n");
+
+            if ( length($tcp_obj->{options}) gt 0) {
+                my $TCPOptions = decodeTCPOptions($tcp_obj->{options});
+                foreach my $tcpoptkey ( keys %{$TCPOptions} ) {
+                    $ret = $ret . sprintf("TCP Option %d : %s\n", $tcpoptkey, $TCPOptions->{$tcpoptkey}->{'name'});
+                    $ret = $ret . format_packet_data_hex($TCPOptions->{$tcpoptkey}->{'data'});
+                }
+            }
+        } elsif ( $ip_obj->{proto} eq IP_PROTO_UDP ) {
+            $udp_obj = NetPacket::UDP->decode($ip_obj->{data});
+            $ret = $ret . sprintf("Len: %d\n", $udp_obj->{len});
+        } elsif ( $ip_obj->{proto} eq IP_PROTO_ICMP ) {
+            $icmp_obj = NetPacket::ICMP->decode($ip_obj->{data});
+            $ret = $ret . sprintf("Type:%d  Code:%d  %s\n", $icmp_obj->{type}, $icmp_obj->{code}, $ICMP_TYPES->{$icmp_obj->{type}});
+        } else {
+            # Should never get here
+            print("DEBUGME: Why am I here - TCP/UDP/ICMP Header print\n");
+        }
+
+        $ret = $ret . "PktAscii: " . format_packet_data_ascii($rec->{'pkt'});
+
+    } else {
+        $ret = $ret . sprintf("Linktype %i not decoded.  Raw packet dumped\n",
+                $eth_obj->{type});
+        $ret = $ret . format_packet_data_hex($eth_obj->{data});
     }
 
     return $ret;

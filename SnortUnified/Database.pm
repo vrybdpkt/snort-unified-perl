@@ -1,7 +1,7 @@
 package SnortUnified::Database;
 
 #########################################################################################
-#  $VERSION = "SnortUnified to MySql 1.0 - Copyright (c) 2007 Jason Brvenik";
+#  $VERSION = "SnortUnified to MySql 1.0 - Copyright (c) 2007-2012 Jason Brvenik";
 # 
 # A Perl module to insert snort data from a unified file into a mysql database.
 # http://www.snort.org
@@ -69,10 +69,10 @@ my $class_self;
 
 BEGIN {
    $class_self = __PACKAGE__;
-   $VERSION = "1.7devel2011070901";
+   $VERSION = "1.8-2012033101";
 }
 my $DBLICENSE = "GNU GPL see http://www.gnu.org/licenses/gpl.txt for more information.";
-sub DBVersion() { "$class_self v$VERSION - Copyright (c) 2006 Jason Brvenik" };
+sub DBVersion() { "$class_self v$VERSION - Copyright (c) 2006-2012 Jason Brvenik" };
 sub DBLicense() { DBVersion . "\nLicensed under the $DBLICENSE" };
 
 # Pollute global namespace

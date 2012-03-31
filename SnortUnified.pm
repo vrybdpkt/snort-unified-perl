@@ -1,7 +1,7 @@
 package SnortUnified;
 
 #########################################################################################
-#  $VERSION = "SnortUnified Parser - Copyright (c) 2007 Jason Brvenik";
+#  $VERSION = "SnortUnified Parser - Copyright (c) 2007-2012 Jason Brvenik";
 # 
 # A Perl module to make it east to work with snort unified files.
 # http://www.snort.org
@@ -33,6 +33,7 @@ package SnortUnified;
 #########################################################################################
 # Changes:
 # V1.1 - Brvenik - Make it speedy
+# V1.8-2012033101 - Patches from Risto Vaarandi
 #########################################################################################
 # TODO: in no specific order
 #  - Documentation
@@ -68,10 +69,10 @@ my $class_self;
 
 BEGIN {
    $class_self = __PACKAGE__;
-   $VERSION = "1.7devel2011070901";
+   $VERSION = "1.8-2012033101";
 }
 my $LICENSE = "GNU GPL see http://www.gnu.org/licenses/gpl.txt for more information.";
-sub Version() { "$class_self v$VERSION - Copyright (c) 2007 Jason Brvenik" };
+sub Version() { "$class_self v$VERSION - Copyright (c) 2007-2012 Jason Brvenik" };
 sub License() { Version . "\nLicensed under the $LICENSE" };
 
 # Pollute global namespace
@@ -653,7 +654,7 @@ sub readSnortUnified2Record() {
         @record = unpack($unified2_type_masks->{$UNIFIED2_PACKET}, $buffer);
         foreach my $fld (@{$UF_Record->{'FIELDS'}}) {
             if ($fld ne 'pkt') {
-                $UF_Record->{$fld} = @record[$i++];
+                $UF_Record->{$fld} = $record[$i++];
                 debug("Field " . $fld . " is set to " . $UF_Record->{$fld});
             } else {
                 debug("Filling in pkt with " . $UF_Record->{'pkt_len'} . " bytes");
@@ -668,7 +669,7 @@ sub readSnortUnified2Record() {
         debug("Unpacking with mask " . $unified2_type_masks->{$UNIFIED2_IDS_EVENT});
         @record = unpack($unified2_type_masks->{$UNIFIED2_IDS_EVENT}, $buffer);
         foreach my $fld (@{$UF_Record->{'FIELDS'}}) {
-            $UF_Record->{$fld} = @record[$i++];
+            $UF_Record->{$fld} = $record[$i++];
             debug("Field " . $fld . " is set to " . $UF_Record->{$fld});
         }
         exec_handler("unified2_event", $UF_Record);
@@ -681,7 +682,7 @@ sub readSnortUnified2Record() {
 
         # N9 - first 9 uint32 fields:
         foreach my $fld (@{$UF_Record->{'FIELDS'}}[0 .. 8]) {
-            $UF_Record->{$fld} = @record[$i++];
+            $UF_Record->{$fld} = $record[$i++];
             debug("Field " . $fld . " is set to " . $UF_Record->{$fld});
         }
         # XXX JRB - need to look here at the "right" way to do it, all addresses are thus far represented as numbers
@@ -697,7 +698,7 @@ sub readSnortUnified2Record() {
         }
         # n2c2 - last fields:
         foreach my $fld (@{$UF_Record->{'FIELDS'}}[11 .. 14]) {
-            $UF_Record->{$fld} = @record[$i++];
+            $UF_Record->{$fld} = $record[$i++];
             debug("Field " . $fld . " is set to " . $UF_Record->{$fld});
         }
         exec_handler("unified2_event", $UF_Record);
@@ -707,7 +708,7 @@ sub readSnortUnified2Record() {
         debug("Unpacking with mask " . $unified2_type_masks->{$UNIFIED2_IDS_EVENT_VLAN});
         @record = unpack($unified2_type_masks->{$UNIFIED2_IDS_EVENT_VLAN}, $buffer);
         foreach my $fld (@{$UF_Record->{'FIELDS'}}) {
-            $UF_Record->{$fld} = @record[$i++];
+            $UF_Record->{$fld} = $record[$i++];
             debug("Field " . $fld . " is set to " . $UF_Record->{$fld});
         }
         exec_handler("unified2_event", $UF_Record);
@@ -718,7 +719,7 @@ sub readSnortUnified2Record() {
         debug("Unpacking with mask " . $unified2_type_masks->{$UNIFIED2_IDS_EVENT_IPV6_VLAN});
         @record = unpack($unified2_type_masks->{$UNIFIED2_IDS_EVENT_IPV6_VLAN}, $buffer);
         foreach my $fld (@{$UF_Record->{'FIELDS'}}) {
-            $UF_Record->{$fld} = @record[$i++];
+            $UF_Record->{$fld} = $record[$i++];
             debug("Field " . $fld . " is set to " . $UF_Record->{$fld});
         }
         exec_handler("unified2_event", $UF_Record);
@@ -730,7 +731,7 @@ sub readSnortUnified2Record() {
        @record = unpack($unified2_type_masks->{$UNIFIED2_EXTRA_DATA}, $buffer);
        foreach my $fld (@{$UF_Record->{'FIELDS'}}) {
            if ($fld ne 'data_blob') {
-                $UF_Record->{$fld} = @record[$i++];
+                $UF_Record->{$fld} = $record[$i++];
                 debug("Field " . $fld . " is set to " . $UF_Record->{$fld});
            } else {
                debug("Filling in data_blob with " . $UF_Record->{'bloblength'} . " byes");
@@ -774,7 +775,7 @@ sub readSnortUnifiedRecord() {
         }
     } elsif ( $UF->{'TYPE'} eq $UNIFIED2 ) {
         $rec = readSnortUnified2Record();
-        while ( $rec == -1 ) {
+        while ( defined($rec) && $rec == -1 ) {
             $rec = readSnortUnified2Record();
         }
     } else {
@@ -828,7 +829,7 @@ sub old_readSnortUnifiedRecord() {
     if ( $debug ) {
         $i = 0;
         foreach my $field (@{$UF->{'FIELDS'}}) {
-            debug(sprintf("Field %s is %x\n", $field, @fields[$i++]));
+            debug(sprintf("Field %s is %x\n", $field, $fields[$i++]));
         }
     }
     $i = 0;
@@ -849,8 +850,8 @@ sub old_readSnortUnifiedRecord() {
             }
 
         } else {
-            debug(sprintf("SETTING FIELD %s with data %d long\n", $field, length(@fields[$i])));
-            $UF_Record->{$field} = @fields[$i++];
+            debug(sprintf("SETTING FIELD %s with data %d long\n", $field, length($fields[$i])));
+            $UF_Record->{$field} = $fields[$i++];
         }
     }
 
@@ -919,7 +920,7 @@ sub readData() {
     #Expose the raw data
     $UF_Record->{'raw_record'} = $buffer;
 
-    exec_handler("read_data", ($readsize, $buffer));
+    exec_handler("read_data", [$readsize, $buffer]);
 
     return ($readsize, $buffer);
 }

@@ -1,7 +1,7 @@
 package SnortUnified::MetaData;
 
 #########################################################################################
-#  $VERSION = "SnortUnified Parser - Copyright (c) 2007 Jason Brvenik";
+#  $VERSION = "SnortUnified Parser - Copyright (c) 2007-2012 Jason Brvenik";
 # 
 # A Perl module to make it easy to work with snort unified files.
 # http://www.snort.org
@@ -38,10 +38,10 @@ my $class_self;
 
 BEGIN {
    $class_self = __PACKAGE__;
-   $VERSION = "1.7devel202011070901";
+   $VERSION = "1.8-2012033101";
 }
 my $LICENSE = "GNU GPL see http://www.gnu.org/licenses/gpl.txt for more information.";
-sub Version() { "$class_self v$VERSION - Copyright (c) 2007-2011 Jason Brvenik" };
+sub Version() { "$class_self v$VERSION - Copyright (c) 2007-2012 Jason Brvenik" };
 sub License() { Version . "\nLicensed under the $LICENSE" };
 
 @ISA = qw(Exporter);
@@ -387,8 +387,8 @@ sub get_snort_sids($$) {
         next if /^(\s)*$/;
         chomp;
         @sid = split(/\s\|\|\s/);
-        $sids->{1}->{@sid[0]}->{'msg'} = @sid[1];
-        $sids->{1}->{@sid[0]}->{'reference'} = @sid[2..$#sid];
+        $sids->{1}->{$sid[0]}->{'msg'} = $sid[1];
+        $sids->{1}->{$sid[0]}->{'reference'} = @sid[2..$#sid];
     }
     close(FD);
 
@@ -398,7 +398,7 @@ sub get_snort_sids($$) {
         next if /^(\s)*$/;
         chomp;
         @generator = split(/\s\|\|\s/);
-        $sids->{@generator[0]}->{@generator[1]}->{'msg'} = @generator[2];
+        $sids->{$generator[0]}->{$generator[1]}->{'msg'} = $generator[2];
     }
     return $sids;
 }
@@ -461,10 +461,10 @@ sub get_snort_classifications ($) {
         next if /^(\s)*$/;
         chomp;
         @classification = split(/:/);
-        @classification = split(/,/,@classification[1]);
-        $class->{$classid}->{'type'} = @classification[0];
-        $class->{$classid}->{'name'} = @classification[1];
-        $class->{$classid}->{'priority'} = @classification[2];
+        @classification = split(/,/,$classification[1]);
+        $class->{$classid}->{'type'} = $classification[0];
+        $class->{$classid}->{'name'} = $classification[1];
+        $class->{$classid}->{'priority'} = $classification[2];
         $classid++;
     }
     close(FD);

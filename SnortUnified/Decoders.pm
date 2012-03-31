@@ -34,14 +34,16 @@ package SnortUnified::Decoders;
 #
 #########################################################################################
 
+use SnortUnified::MetaData qw(:ALL);
+
 my $class_self;
 
 BEGIN {
    $class_self = __PACKAGE__;
-   $VERSION = "1.7devel2011070901";
+   $VERSION = "1.8-2012033101";
 }
 my $LICENSE = "GNU GPL see http://www.gnu.org/licenses/gpl.txt for more information.";
-sub Version() { "$class_self v$VERSION - Copyright (c) 2007 Jason Brvenik" };
+sub Version() { "$class_self v$VERSION - Copyright (c) 2007-2012 Jason Brvenik" };
 sub License() { Version . "\nLicensed under the $LICENSE" };
 
 @ISA = qw(Exporter);
@@ -91,13 +93,13 @@ sub decodeIPOptions($) {
         my $data;
 
         while ( $bytepos < $optionlen ) {
-            $number = ( @bytes[$bytepos] & 0x1F );
-            $copy = ( @bytes[$bytepos] & 0x80 ) >> 7;
-            $class = ( @bytes[$bytepos] & 0x60 ) >> 5;
+            $number = ( $bytes[$bytepos] & 0x1F );
+            $copy = ( $bytes[$bytepos] & 0x80 ) >> 7;
+            $class = ( $bytes[$bytepos] & 0x60 ) >> 5;
             $name = $IP_OPT_MAP->{$number}->{'name'};
             if ( $IP_OPT_MAP->{$number}->{'length'} eq 0 ) {
                 # Length is actual len for entire option
-                $length = @bytes[$bytepos+1];
+                $length = $bytes[$bytepos+1];
                 debug("IP Option len is $length\n");
                 if ( $length le 0 || $length gt ( $optionlen - $bytepos )) {
                     #something odd
@@ -115,11 +117,11 @@ sub decodeIPOptions($) {
                 $bytepos = $bytepos + $IP_OPT_MAP->{$number}->{'length'};
             } elsif ( exists $IP_OPT_MAP->{$number}->{'length'} ) {
                 # there is no length or data. it just exists.
-                $data = @bytes[$bytepos];;
+                $data = $bytes[$bytepos];
                 $length = 0;
             } else {
                 # Treat it as an option with a length
-                $length = @bytes[$bytepos+1];
+                $length = $bytes[$bytepos+1];
                 if ( $length le 0 || $length gt ( $optionlen - $bytepos ) ) {
                     # something odd
                     $length = $optionlen - $bytepos;
@@ -156,14 +158,14 @@ sub decodeTCPOptions($) {
 
         debug(sprintf("START TCPOPT Option Length is %d\n", $optionlen));
         while ( $bytepos < $optionlen ) {
-            $number = @bytes[$bytepos];
+            $number = $bytes[$bytepos];
         debug(sprintf("TCPOPT OPT Number is %d\n", $number));
 
             $name = exists $TCP_OPT_MAP->{$number}->{'name'}?$TCP_OPT_MAP->{$number}->{'name'}:"UNKNOWN";
         debug(sprintf("TCP OPT Name maps to %s\n", $name));
             if ( $TCP_OPT_MAP->{$number}->{'length'} eq 0 ) {
                 # Length is actual len for entire option
-                $length = @bytes[$bytepos+1];
+                $length = $bytes[$bytepos+1];
                 debug(sprintf("TCP OPT LEN eq 0 Read Length is %d\n", $length));
                 if ( $length le 0 || $length gt ( $optionlen - $bytepos )) {
                     # something odd
@@ -183,12 +185,12 @@ sub decodeTCPOptions($) {
                 $bytepos += $length;
             } elsif ( exists $TCP_OPT_MAP->{$number}->{'length'} ) {
                 # there is no length or data. it just exists.
-                $data = @bytes[$bytepos];
+                $data = $bytes[$bytepos];
                 $length = 0;
                 $bytepos += 1;
             } else {
                 # Treat it as an option with a length
-                $length = @bytes[$bytepos+1];
+                $length = $bytes[$bytepos+1];
                 debug(sprintf("TCP OPT LEN ELSE CONDITION Option Length is %d\n", $length));
                 if ( $length le 0 || $length gt ( $optionlen - $bytepos ) ) {
                     # something odd
