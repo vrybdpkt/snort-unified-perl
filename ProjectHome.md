@@ -1,0 +1,1 @@
+A set of perl modules to handle snort unified files. Currently supported formats are unified log and alert files, unified2 IPS events and Packets.
